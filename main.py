@@ -1,6 +1,10 @@
 # Todo:
 # - Accuracy calculation
-# - Show time option
+# - Show/hide time
+# - Center text (both axes)
+# - Use F-keys
+# - Fix escape issue on first character
+# - Solve cyclomatic complexity for draw_screen() and wpm_test()
 
 import curses
 from time import time
@@ -138,24 +142,35 @@ def draw_screen(
         stdscr.addstr(len(breaks) * 2 + 6, 0, 'q = Exit, r = New text')
 
 
+def get_valid_text(special_chr):
+
+    # reject texts with unexpected chrs
+    text_ok = False
+    while text_ok is False:
+        text_ok = True
+    try:
+        text = run('fortune', capture_output=True, text=True).stdout
+    except FileNotFoundError:  # temporary Docker work-around
+        fortune = '/usr/games/fortune'
+        text = run(fortune, capture_output=True, text=True).stdout
+    for chr in text:
+        if chr not in special_chr and not chr.isalnum() and not ' ':
+            text_ok = False
+
+    # format text
+    text = text.replace('\n', ' ')
+    text = re.sub(r'\s{2,}', ' ', text)
+    text = text.strip()
+
+    return text
+
+
 def test_init(stdscr, special_chr):
     current_text = ''
     wpm = 0
     time_elapsed = 0
 
-    text_ok = True
-    while text_ok:
-        try:
-            text = run('fortune', capture_output=True, text=True).stdout
-        except FileNotFoundError:  # temporary Docker work-around
-            fortune = '/usr/games/fortune'
-            text = run(fortune, capture_output=True, text=True).stdout
-        for chr in text:
-            if chr not in special_chr and not chr.isalpha():
-                text_ok = False
-    text = text.replace('\n', ' ')
-    text = re.sub(r'\s{2,}', ' ', text)
-    target_text = text.strip()
+    target_text = get_valid_text(special_chr)
 
     words = get_words(target_text, special_chr)
     breaks = get_breaks(target_text, stdscr.getmaxyx()[1])
@@ -212,8 +227,10 @@ def wpm_test(stdscr, special_chr):
                 if len(current_text) > 0:
                     current_text = current_text[:-1]
                     test_in_progress = True
-            elif test_in_progress or (
-                    current_text == '' and test_in_progress is False):
+            elif (
+                    test_in_progress
+                    or (current_text == '' and test_in_progress is False)
+                 ):
                 current_text = current_text + key
                 test_in_progress = True
             elif current_text != '' and test_in_progress is False:
@@ -236,7 +253,7 @@ def main(stdscr):
     stdscr.nodelay(True)
     rate = 500
     stdscr.timeout(rate)
-    special_chr = (' ', ',', '.', '!', '?', ':', ';', '"', '\'', '(', ')')
+    special_chr = (' ', ',', '.', '!', '?', ':', ';', '"', '\'', '(', ')', '-')
 
     wpm_test(stdscr, special_chr)
 
