@@ -1,7 +1,6 @@
 # Todo:
 # - Accuracy calculation
-# - Don't start timer until first letter is typed
-# - Hide time option
+# - Show time option
 
 import curses
 from time import time
@@ -117,7 +116,10 @@ def draw_screen(
         except IndexError:
             stdscr.addstr((y * 2) + 1, i - rev_i, ch)
         # current position
-        if (i == len(current_text) - 1 and len(current_text) != len(target_text)):
+        if (
+            i == len(current_text) - 1
+            and len(current_text) != len(target_text)
+        ):
             y_underscore = y
             rev_underscore = rev_i
             try:
@@ -130,10 +132,10 @@ def draw_screen(
             stdscr.addstr((y_underscore * 2) + 1, i - rev_underscore + 1, '_')
 
     stdscr.addstr(len(breaks) * 2 + 3, 0, f'WPM: {wpm}')
-    stdscr.addstr(len(breaks) * 2 + 4, 0, f'Time: {round(time_elapsed)}')
+    # stdscr.addstr(len(breaks) * 2 + 4, 0, f'Time: {round(time_elapsed)}')
 
     if current_text != '' and test_in_progress is False:
-        stdscr.addstr(len(breaks) * 2 + 6, 0, 'q = Exit, r = Reset')
+        stdscr.addstr(len(breaks) * 2 + 6, 0, 'q = Exit, r = New text')
 
 
 def test_init(stdscr, special_chr):
