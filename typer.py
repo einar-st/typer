@@ -5,6 +5,7 @@
 # - Use F-keys
 # - Fix escape issue on first character
 # - Solve cyclomatic complexity for draw_screen() and wpm_test()
+# - Return key should be treated as ' '
 
 import curses
 from time import time
@@ -119,21 +120,18 @@ def draw_screen(
                 stdscr.addstr((y * 2) + 1, i - rev_i, ch)
         except IndexError:
             stdscr.addstr((y * 2) + 1, i - rev_i, ch)
-        # current position
-        if (
-            i == len(current_text) - 1
-            and len(current_text) != len(target_text)
-        ):
-            y_underscore = y
-            rev_underscore = rev_i
-            try:
-                if i + 1 == breaks[y]:
-                    y_underscore += 1
-                    rev_underscore = i + 1
-            except IndexError:
-                pass
 
-            stdscr.addstr((y_underscore * 2) + 1, i - rev_underscore + 1, '_')
+    if test_in_progress:
+        y_underscore = y
+        rev_underscore = rev_i
+        try:
+            if i + 1 == breaks[y]:
+                y_underscore += 1
+                rev_underscore = i + 1
+        except IndexError:
+            pass
+
+        stdscr.addstr((y_underscore * 2) + 1, i - rev_underscore + 1, '_')
 
     stdscr.addstr(len(breaks) * 2 + 3, 0, f'WPM: {wpm}')
     # stdscr.addstr(len(breaks) * 2 + 4, 0, f'Time: {round(time_elapsed)}')
