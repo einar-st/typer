@@ -1,9 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-RUN apt-get update
-RUN apt-get install -y fortune-mod
+RUN apk add --no-cache fortune
 
 COPY typer.py .
 
