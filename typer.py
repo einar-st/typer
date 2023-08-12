@@ -14,18 +14,16 @@ import re
 
 
 def calc_wpm(words, current_text, time_elapsed):
-
     valid_length = 0
     for word_idx in words.keys():
-        if words[word_idx]['correct']:
-            valid_length += len(words[word_idx]['word'])
+        if words[word_idx]["correct"]:
+            valid_length += len(words[word_idx]["word"])
     wpm = round((valid_length / (time_elapsed / 60)) / 5)
 
     return wpm
 
 
 def get_breaks(target_text, width):
-
     space_left = width
     words = target_text.split()
     current_index = 0
@@ -44,56 +42,60 @@ def get_breaks(target_text, width):
 
 
 def get_words(string, special_chr):
-
     words = {}
-    word = ''
+    word = ""
     word_start = 0
 
     for i in range(len(string)):
         if string[i] in special_chr:
             pass
-            if word != '':
-                words[word_start] = {'word': word, 'correct': False}
-                word = ''
-            words[i] = {'word': string[i], 'correct': False}
+            if word != "":
+                words[word_start] = {"word": word, "correct": False}
+                word = ""
+            words[i] = {"word": string[i], "correct": False}
             word_start = i + 1
         else:
             if word_start == -1:
                 word_start = i
             word += string[i]
 
-    if word != '':
-        words[word_start] = {'word': word, 'correct': False}
-        word = ''
+    if word != "":
+        words[word_start] = {"word": word, "correct": False}
+        word = ""
 
     return words
 
 
 def update_words(words, current_text):
     for word_idx in words.keys():
-        for i, letter in enumerate(words[word_idx]['word']):
+        for i, letter in enumerate(words[word_idx]["word"]):
             try:
                 if current_text[word_idx + i] == letter:
-                    words[word_idx]['correct'] = True
+                    words[word_idx]["correct"] = True
                 else:
-                    words[word_idx]['correct'] = False
+                    words[word_idx]["correct"] = False
                     break
             except IndexError:
-                words[word_idx]['correct'] = False
+                words[word_idx]["correct"] = False
                 break
 
 
 def draw_screen(
-    stdscr, words, target_text, current_text, breaks, time_elapsed, wpm,
-    test_in_progress
+    stdscr,
+    words,
+    target_text,
+    current_text,
+    breaks,
+    time_elapsed,
+    wpm,
+    test_in_progress,
 ):
-
     # target text
     y = 0
     x = 0
     for word in words.keys():
         col = curses.color_pair(2)
-        if words[word]['correct']:
+        if words[word]["correct"]:
             col = curses.color_pair(1)
         try:
             if word == breaks[y]:
@@ -102,9 +104,9 @@ def draw_screen(
         except IndexError:
             pass
 
-        stdscr.addstr(y * 2, x, words[word]['word'], col)
+        stdscr.addstr(y * 2, x, words[word]["word"], col)
 
-        x += len(words[word]['word'])
+        x += len(words[word]["word"])
 
     # current text
     y = 0
@@ -131,40 +133,39 @@ def draw_screen(
         except IndexError:
             pass
 
-        stdscr.addstr((y_underscore * 2) + 1, i - rev_underscore + 1, '_')
+        stdscr.addstr((y_underscore * 2) + 1, i - rev_underscore + 1, "_")
 
-    stdscr.addstr(len(breaks) * 2 + 3, 0, f'WPM: {wpm}')
+    stdscr.addstr(len(breaks) * 2 + 3, 0, f"WPM: {wpm}")
     # stdscr.addstr(len(breaks) * 2 + 4, 0, f'Time: {round(time_elapsed)}')
 
-    if current_text != '' and test_in_progress is False:
-        stdscr.addstr(len(breaks) * 2 + 6, 0, 'q = Exit, r = New text')
+    if current_text != "" and test_in_progress is False:
+        stdscr.addstr(len(breaks) * 2 + 6, 0, "q = Exit, r = New text")
 
 
 def get_valid_text(special_chr):
-
     # reject texts with unexpected chrs
     text_ok = False
     while text_ok is False:
         text_ok = True
     try:
-        text = run('fortune', capture_output=True, text=True).stdout
+        text = run("fortune", capture_output=True, text=True).stdout
     except FileNotFoundError:  # temporary Docker work-around
-        fortune = '/usr/games/fortune'
+        fortune = "/usr/games/fortune"
         text = run(fortune, capture_output=True, text=True).stdout
     for chr in text:
-        if chr not in special_chr and not chr.isalnum() and not ' ':
+        if chr not in special_chr and not chr.isalnum() and not " ":
             text_ok = False
 
     # format text
-    text = text.replace('\n', ' ')
-    text = re.sub(r'\s{2,}', ' ', text)
+    text = text.replace("\n", " ")
+    text = re.sub(r"\s{2,}", " ", text)
     text = text.strip()
 
     return text
 
 
 def test_init(stdscr, special_chr):
-    current_text = ''
+    current_text = ""
     wpm = 0
     time_elapsed = 0
 
@@ -175,22 +176,30 @@ def test_init(stdscr, special_chr):
     test_in_progress = False
 
     return (
-        current_text, wpm, time_elapsed,
-        target_text, words, breaks, test_in_progress
+        current_text,
+        wpm,
+        time_elapsed,
+        target_text,
+        words,
+        breaks,
+        test_in_progress,
     )
 
 
 def wpm_test(stdscr, special_chr):
-
     (
-        current_text, wpm, time_elapsed, target_text,
-        words, breaks, test_in_progress
+        current_text,
+        wpm,
+        time_elapsed,
+        target_text,
+        words,
+        breaks,
+        test_in_progress,
     ) = test_init(stdscr, special_chr)
 
     start_time = 0
 
     while True:
-
         update_words(words, current_text)
 
         if test_in_progress:
@@ -204,13 +213,24 @@ def wpm_test(stdscr, special_chr):
         stdscr.erase()
         try:
             draw_screen(
-                stdscr, words, target_text, current_text, breaks, time_elapsed,
-                wpm, test_in_progress
+                stdscr,
+                words,
+                target_text,
+                current_text,
+                breaks,
+                time_elapsed,
+                wpm,
+                test_in_progress,
             )
         except curses.error:
             (
-                current_text, wpm, time_elapsed,
-                target_text, words, breaks, test_in_progress
+                current_text,
+                wpm,
+                time_elapsed,
+                target_text,
+                words,
+                breaks,
+                test_in_progress,
             ) = test_init(stdscr, special_chr)
         stdscr.refresh()
 
@@ -221,23 +241,31 @@ def wpm_test(stdscr, special_chr):
                     test_in_progress = False
             except TypeError:
                 pass
-            if key in ('KEY_BACKSPACE', '\b', '\x7f'):
-                if len(current_text) > 0:
+            if key in ("KEY_BACKSPACE", "\b", "\x7f"):
+                try:
                     current_text = current_text[:-1]
+                except IndexError:
+                    pass
+                if len(current_text) > 0:
                     test_in_progress = True
-            elif (
-                    test_in_progress
-                    or (current_text == '' and test_in_progress is False)
-                 ):
+                else:
+                    test_in_progress = False
+            elif test_in_progress or (
+                    current_text == "" and test_in_progress is False):
                 current_text = current_text + key
                 test_in_progress = True
-            elif current_text != '' and test_in_progress is False:
-                if key == 'r':
+            elif current_text != "" and test_in_progress is False:
+                if key == "r":
                     (
-                        current_text, wpm, time_elapsed,
-                        target_text, words, breaks, test_in_progress
+                        current_text,
+                        wpm,
+                        time_elapsed,
+                        target_text,
+                        words,
+                        breaks,
+                        test_in_progress,
                     ) = test_init(stdscr, special_chr)
-                elif key == 'q':
+                elif key == "q":
                     exit()
         except curses.error:
             pass
@@ -251,7 +279,7 @@ def main(stdscr):
     stdscr.nodelay(True)
     rate = 500
     stdscr.timeout(rate)
-    special_chr = (' ', ',', '.', '!', '?', ':', ';', '"', '\'', '(', ')', '-')
+    special_chr = (" ", ",", ".", "!", "?", ":", ";", '"', "'", "(", ")", "-")
 
     wpm_test(stdscr, special_chr)
 
